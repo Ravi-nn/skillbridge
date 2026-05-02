@@ -10,8 +10,8 @@ SkillBridge is a free, open-source web app that compares your current skills aga
 
 ## 🌍 Live Demo
 
-👉 **[skillbridge.yourname.github.io](https://yourname.github.io/skillbridge)**
-*(Replace with your GitHub Pages URL after deploying)*
+👉 **[skillbridge.Ravi-nn.github.io](https://Ravi-nn.github.io/skillbridge)**
+
 
 ---
 
@@ -47,36 +47,7 @@ SkillBridge is a free, open-source web app that compares your current skills aga
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/yourusername/skillbridge.git
-
-# 2. Open the folder
-cd skillbridge
-
-# 3. Open in browser — no server needed!
-open index.html
-```
-
-> ✅ That's it. No npm, no build step, no dependencies.
-
-### Option 2 — Download ZIP
-
-1. Click **Code → Download ZIP** on GitHub
-2. Extract the folder
-3. Double-click `index.html`
-
----
-
-## 🔑 Connecting Real Job Data (Optional but Recommended)
-
-By default, SkillBridge uses a curated sample dataset. To enable **live job listings**:
-
-1. Sign up free at [developer.adzuna.com](https://developer.adzuna.com/)
-2. Create an app → copy your **App ID** and **App Key**
-3. Open SkillBridge in your browser
-4. Enter your keys in the **"Connect Real Job Data"** section
-5. Keys are stored in `localStorage` — never sent anywhere else
-
----
+git clone https://github.com/yourusername/
 
 ## 📁 Project Structure
 
