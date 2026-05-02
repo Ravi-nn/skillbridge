@@ -72,19 +72,62 @@
   <!-- API KEY SETUP -->
   <section class="api-notice" id="api-notice">
     <div class="notice-card">
+
       <div class="notice-top">
-        <div class="notice-icon">🔑</div>
+        <div class="notice-icon">⚡</div>
         <div class="notice-text">
-          <h3>Connect Real Job Data <span class="optional-badge">Optional</span></h3>
-          <p>Get a free API key at <a href="https://developer.adzuna.com/" target="_blank" rel="noopener">developer.adzuna.com</a> to pull live job listings. Keys are saved only in your browser — never sent to us.</p>
+          <h3>Connect Live Job Data <span class="optional-badge">Optional</span></h3>
+          <p>Choose a source below. Keys stay in your browser only. <strong>JSearch is best for India</strong> — it pulls from Naukri, LinkedIn, Indeed &amp; Internshala.</p>
         </div>
       </div>
-      <div class="api-inputs">
-        <input type="text" id="api-app-id" placeholder="Adzuna App ID" />
-        <input type="text" id="api-app-key" placeholder="Adzuna App Key" />
-        <button class="btn-save-api" onclick="saveApiKeys()">Save & Enable →</button>
+
+      <!-- Source Tabs -->
+      <div class="api-tabs">
+        <button class="api-tab active" onclick="switchApiTab('jsearch',this)">
+          <span class="api-tab-icon">🇮🇳</span>
+          <span class="api-tab-name">JSearch</span>
+          <span class="api-tab-sub">Naukri · LinkedIn · Indeed · Internshala</span>
+        </button>
+        <button class="api-tab" onclick="switchApiTab('adzuna',this)">
+          <span class="api-tab-icon">🌍</span>
+          <span class="api-tab-name">Adzuna</span>
+          <span class="api-tab-sub">Global · UK · US · AU</span>
+        </button>
+        <button class="api-tab" onclick="switchApiTab('remotive',this)">
+          <span class="api-tab-icon">💻</span>
+          <span class="api-tab-name">Remotive</span>
+          <span class="api-tab-sub">Remote Tech Jobs · No key needed</span>
+        </button>
       </div>
-      <button class="btn-skip" onclick="skipApiSetup()">Skip — Use Sample Data instead</button>
+
+      <!-- JSearch Panel -->
+      <div class="api-panel" id="panel-jsearch">
+        <p class="api-hint">🔗 Free key at <a href="https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch" target="_blank" rel="noopener">rapidapi.com → JSearch</a> (500 free requests/month)</p>
+        <div class="api-inputs">
+          <input type="text" id="jsearch-key" placeholder="Your RapidAPI Key for JSearch…" />
+          <button class="btn-save-api" onclick="saveJSearchKey()">Connect →</button>
+        </div>
+      </div>
+
+      <!-- Adzuna Panel -->
+      <div class="api-panel hidden" id="panel-adzuna">
+        <p class="api-hint">🔗 Free keys at <a href="https://developer.adzuna.com/" target="_blank" rel="noopener">developer.adzuna.com</a></p>
+        <div class="api-inputs">
+          <input type="text" id="api-app-id"  placeholder="Adzuna App ID" />
+          <input type="text" id="api-app-key" placeholder="Adzuna App Key" />
+          <button class="btn-save-api" onclick="saveApiKeys()">Connect →</button>
+        </div>
+      </div>
+
+      <!-- Remotive Panel -->
+      <div class="api-panel hidden" id="panel-remotive">
+        <p class="api-hint">✅ No API key needed — Remotive is completely free and open.</p>
+        <div class="api-inputs">
+          <button class="btn-save-api" onclick="enableRemotive()" style="width:100%;max-width:100%">Enable Remotive (Free) →</button>
+        </div>
+      </div>
+
+      <button class="btn-skip" onclick="skipApiSetup()">Skip — Use Sample Data</button>
     </div>
   </section>
 
@@ -144,7 +187,10 @@
     <div class="results-inner">
 
       <div class="results-header">
-        <p class="results-badge">✅ Analysis Complete</p>
+        <div class="results-meta-row">
+          <p class="results-badge">✅ Analysis Complete</p>
+          <p class="results-timestamp" id="results-timestamp"></p>
+        </div>
         <h2>Your Skill Report</h2>
         <p class="results-city" id="results-city"></p>
       </div>
@@ -204,12 +250,33 @@
 
       <!-- Live Jobs -->
       <div class="jobs-section" id="jobs-section">
-        <h3>🏢 Live Jobs That Match Your Target Role</h3>
-        <p class="jobs-sub">Once you've closed your gap, these are waiting for you.</p>
+        <div class="jobs-header">
+          <div>
+            <h3>🏢 Live Jobs That Match Your Role</h3>
+            <p class="jobs-sub">Real listings from your city — sorted by relevance.</p>
+          </div>
+          <div class="jobs-count-badge" id="jobs-count-badge"></div>
+        </div>
+
+        <!-- Filters -->
+        <div class="job-filters" id="job-filters">
+          <button class="jf-btn active" data-filter="all"       onclick="filterJobs('all',this)">All Jobs</button>
+          <button class="jf-btn"        data-filter="full_time" onclick="filterJobs('full_time',this)">🕐 Full-time</button>
+          <button class="jf-btn"        data-filter="part_time" onclick="filterJobs('part_time',this)">⏰ Part-time</button>
+          <button class="jf-btn"        data-filter="remote"    onclick="filterJobs('remote',this)">🌍 Remote</button>
+          <button class="jf-btn"        data-filter="salary"    onclick="filterJobs('salary',this)">💰 With Salary</button>
+        </div>
+
         <div class="jobs-list" id="jobs-list"></div>
-        <a class="btn-more-jobs" id="btn-more-jobs" href="#" target="_blank" rel="noopener">
-          View All Jobs on Adzuna →
-        </a>
+
+        <div class="jobs-footer">
+          <button class="btn-load-more" id="btn-load-more" onclick="loadMoreJobs()" style="display:none">
+            Load More Jobs ↓
+          </button>
+          <a class="btn-more-jobs" id="btn-more-jobs" href="#" target="_blank" rel="noopener">
+            View All on Adzuna →
+          </a>
+        </div>
       </div>
 
       <!-- CTA -->
