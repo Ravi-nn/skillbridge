@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://ravi-nn.github.io/skillbridge/sitemap.xml
