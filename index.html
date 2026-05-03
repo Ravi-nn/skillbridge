@@ -76,6 +76,14 @@
 
   <!-- ══ Theme Color (mobile browser bar) ══ -->
   <meta name="theme-color" content="#00F5A0" />
+
+  <!-- ══ Google Search Console Verification ══
+       Step 1: Go to https://search.google.com/search-console
+       Step 2: Add property → https://ravi-nn.github.io/skillbridge/
+       Step 3: Choose "HTML tag" verification
+       Step 4: Replace XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX below with your code
+  -->
+  <!-- <meta name="google-site-verification" content="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" /> -->
 </head>
 <body>
 
@@ -112,6 +120,74 @@
       <div class="stat"><span>100%</span><p>Free</p></div>
       <div class="stat-divider"></div>
       <div class="stat"><span>2 min</span><p>To Results</p></div>
+    </div>
+  </section>
+
+  <!-- HERO MOCKUP -->
+  <section class="hero-mockup-section">
+    <div class="hero-mockup-wrap">
+      <div class="mockup-label">✨ Here's what your report looks like</div>
+      <div class="hero-mockup">
+
+        <!-- Top bar -->
+        <div class="mock-topbar">
+          <div class="mock-dots"><span></span><span></span><span></span></div>
+          <div class="mock-url">ravi-nn.github.io/skillbridge</div>
+        </div>
+
+        <div class="mock-body">
+          <!-- Score circle -->
+          <div class="mock-score-row">
+            <div class="mock-score-circle">
+              <svg viewBox="0 0 80 80" width="80" height="80">
+                <circle cx="40" cy="40" r="32" fill="none" stroke="#1a1a2e" stroke-width="7"/>
+                <circle cx="40" cy="40" r="32" fill="none" stroke="url(#mg)" stroke-width="7"
+                  stroke-dasharray="201" stroke-dashoffset="60" stroke-linecap="round"
+                  transform="rotate(-90 40 40)"/>
+                <defs>
+                  <linearGradient id="mg" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#00F5A0"/>
+                    <stop offset="100%" stop-color="#00C9FF"/>
+                  </linearGradient>
+                </defs>
+                <text x="40" y="44" text-anchor="middle" fill="#00F5A0" font-size="16" font-weight="700" font-family="Space Grotesk,sans-serif">72%</text>
+              </svg>
+              <div class="mock-score-label">Job Readiness</div>
+            </div>
+            <div class="mock-score-stats">
+              <div class="mock-stat-item"><span class="msi-num green">6</span><span class="msi-lbl">Skills Matched</span></div>
+              <div class="mock-stat-item"><span class="msi-num red">4</span><span class="msi-lbl">Skills to Learn</span></div>
+              <div class="mock-stat-item"><span class="msi-num blue">18</span><span class="msi-lbl">Jobs Scanned</span></div>
+            </div>
+          </div>
+
+          <!-- Skill tags -->
+          <div class="mock-section-label">✅ Skills You Have</div>
+          <div class="mock-tags">
+            <span class="mock-tag have">HTML</span>
+            <span class="mock-tag have">CSS</span>
+            <span class="mock-tag have">JavaScript</span>
+            <span class="mock-tag have">Figma</span>
+            <span class="mock-tag have">Git</span>
+          </div>
+          <div class="mock-section-label mt">🎯 Skills to Learn Next</div>
+          <div class="mock-tags">
+            <span class="mock-tag miss">React</span>
+            <span class="mock-tag miss">TypeScript</span>
+            <span class="mock-tag miss">Node.js</span>
+            <span class="mock-tag miss">MongoDB</span>
+          </div>
+
+          <!-- Roadmap preview -->
+          <div class="mock-section-label mt">📚 Your Free Roadmap</div>
+          <div class="mock-roadmap">
+            <div class="mock-road-item"><span class="mrn">01</span><span class="mrt">React — react.dev/learn</span><span class="mrl">Start →</span></div>
+            <div class="mock-road-item"><span class="mrn">02</span><span class="mrt">TypeScript — typescriptlang.org</span><span class="mrl">Start →</span></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="mockup-glow"></div>
     </div>
   </section>
 
@@ -248,64 +324,58 @@
   </section>
 
   <!-- API KEY SETUP -->
-  <section class="api-notice" id="api-notice">
-    <div class="notice-card">
-
-      <div class="notice-top">
-        <div class="notice-icon">⚡</div>
-        <div class="notice-text">
-          <h3>Connect Live Job Data <span class="optional-badge">Optional</span></h3>
-          <p>Choose a source below. Keys stay in your browser only. <strong>JSearch is best for India</strong> — it pulls from Naukri, LinkedIn, Indeed &amp; Internshala.</p>
+  <!-- DATA MODE TOGGLE (Simple for all users) -->
+  <section class="data-toggle-section" id="api-notice">
+    <div class="data-toggle-card">
+      <div class="data-toggle-header">
+        <div class="data-toggle-icon">📊</div>
+        <div>
+          <h3 class="data-toggle-title">Choose Your Job Data</h3>
+          <p class="data-toggle-sub">Both options are completely free. No account needed.</p>
         </div>
       </div>
 
-      <!-- Source Tabs -->
-      <div class="api-tabs">
-        <button class="api-tab active" onclick="switchApiTab('jsearch',this)">
-          <span class="api-tab-icon">🇮🇳</span>
-          <span class="api-tab-name">JSearch</span>
-          <span class="api-tab-sub">Naukri · LinkedIn · Indeed · Internshala</span>
-        </button>
-        <button class="api-tab" onclick="switchApiTab('adzuna',this)">
-          <span class="api-tab-icon">🌍</span>
-          <span class="api-tab-name">Adzuna</span>
-          <span class="api-tab-sub">Global · UK · US · AU</span>
-        </button>
-        <button class="api-tab" onclick="switchApiTab('remotive',this)">
-          <span class="api-tab-icon">💻</span>
-          <span class="api-tab-name">Remotive</span>
-          <span class="api-tab-sub">Remote Tech Jobs · No key needed</span>
-        </button>
+      <div class="data-options">
+
+        <!-- Option A: Sample Data (default, zero friction) -->
+        <div class="data-option active" id="opt-sample" onclick="selectDataOption('sample', this)">
+          <div class="data-opt-check" id="check-sample">✓</div>
+          <div class="data-opt-icon">⚡</div>
+          <div class="data-opt-info">
+            <div class="data-opt-name">Start Instantly</div>
+            <div class="data-opt-desc">Use our curated skill database — no setup needed. Great for a quick check.</div>
+          </div>
+          <div class="data-opt-badge">Recommended</div>
+        </div>
+
+        <!-- Option B: Live Data (one extra step) -->
+        <div class="data-option" id="opt-live" onclick="selectDataOption('live', this)">
+          <div class="data-opt-check hidden" id="check-live">✓</div>
+          <div class="data-opt-icon">🇮🇳</div>
+          <div class="data-opt-info">
+            <div class="data-opt-name">Live Job Data</div>
+            <div class="data-opt-desc">Pull real jobs from Naukri, LinkedIn & Indeed for your exact city today.</div>
+          </div>
+          <div class="data-opt-badge live-badge">More Accurate</div>
+        </div>
+
       </div>
 
-      <!-- JSearch Panel -->
-      <div class="api-panel" id="panel-jsearch">
-        <p class="api-hint">🔗 Free key at <a href="https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch" target="_blank" rel="noopener">rapidapi.com → JSearch</a> (500 free requests/month)</p>
-        <div class="api-inputs">
-          <input type="text" id="jsearch-key" placeholder="Your RapidAPI Key for JSearch…" />
+      <!-- Live data setup — hidden until user picks it -->
+      <div class="live-setup" id="live-setup">
+        <p class="live-setup-label">📋 Paste your free RapidAPI key below
+          <a href="https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch" target="_blank" rel="noopener">(Get free key — takes 2 min)</a>
+        </p>
+        <div class="live-setup-row">
+          <input type="text" id="jsearch-key" placeholder="Paste your RapidAPI key here…" />
           <button class="btn-save-api" onclick="saveJSearchKey()">Connect →</button>
         </div>
+        <!-- Hidden fields for Adzuna compat -->
+        <input type="hidden" id="api-app-id" />
+        <input type="hidden" id="api-app-key" />
       </div>
 
-      <!-- Adzuna Panel -->
-      <div class="api-panel hidden" id="panel-adzuna">
-        <p class="api-hint">🔗 Free keys at <a href="https://developer.adzuna.com/" target="_blank" rel="noopener">developer.adzuna.com</a></p>
-        <div class="api-inputs">
-          <input type="text" id="api-app-id"  placeholder="Adzuna App ID" />
-          <input type="text" id="api-app-key" placeholder="Adzuna App Key" />
-          <button class="btn-save-api" onclick="saveApiKeys()">Connect →</button>
-        </div>
-      </div>
-
-      <!-- Remotive Panel -->
-      <div class="api-panel hidden" id="panel-remotive">
-        <p class="api-hint">✅ No API key needed — Remotive is completely free and open.</p>
-        <div class="api-inputs">
-          <button class="btn-save-api" onclick="enableRemotive()" style="width:100%;max-width:100%">Enable Remotive (Free) →</button>
-        </div>
-      </div>
-
-      <button class="btn-skip" onclick="skipApiSetup()">Skip — Use Sample Data</button>
+      <button class="btn-continue" onclick="confirmDataChoice()">Continue →</button>
     </div>
   </section>
 

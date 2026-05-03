@@ -13,14 +13,43 @@ let jsearchKey    = '';
 let adzunaAppId   = '';
 let adzunaAppKey  = '';
 
-// ── API Tab Switcher ───────────────────────────────────────
-function switchApiTab(source, btn) {
-  document.querySelectorAll('.api-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  ['jsearch','adzuna','remotive'].forEach(s => {
-    document.getElementById(`panel-${s}`).classList.toggle('hidden', s !== source);
-  });
+// ── Simple Data Option Toggle ──────────────────────────────
+function selectDataOption(choice, el) {
+  // Deselect all
+  document.querySelectorAll('.data-option').forEach(o => o.classList.remove('active'));
+  document.getElementById('check-sample').classList.add('hidden');
+  document.getElementById('check-live').classList.add('hidden');
+
+  // Select chosen
+  el.classList.add('active');
+  document.getElementById(`check-${choice}`).classList.remove('hidden');
+
+  // Show/hide live setup
+  const setup = document.getElementById('live-setup');
+  if (choice === 'live') {
+    setup.classList.add('visible');
+  } else {
+    setup.classList.remove('visible');
+  }
 }
+
+function confirmDataChoice() {
+  const liveActive = document.getElementById('opt-live').classList.contains('active');
+  if (liveActive) {
+    const key = document.getElementById('jsearch-key').value.trim();
+    if (!key) {
+      flashNotice('Please paste your RapidAPI key to use live data — or choose "Start Instantly".', 'warn');
+      document.getElementById('jsearch-key').focus();
+      return;
+    }
+    saveJSearchKey();
+  } else {
+    skipApiSetup();
+  }
+}
+
+// Keep switchApiTab as no-op for backward compat
+function switchApiTab() {}
 
 // ── Save JSearch Key ───────────────────────────────────────
 function saveJSearchKey() {
