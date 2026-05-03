@@ -839,3 +839,115 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') analyzeSkills();
   });
 });
+
+/* ============================================================
+   TESTIMONIALS SLIDER
+   Auto-scroll · Drag · Dot Navigation
+   ============================================================ */
+
+(function () {
+  let current     = 0;
+  let total       = 0;
+  let autoTimer   = null;
+  let isDragging  = false;
+  let startX      = 0;
+  let dragOffset  = 0;
+  const INTERVAL  = 4000;
+
+  function initSlider() {
+    const track  = document.getElementById('ttrack');
+    const dots   = document.querySelectorAll('.tdot');
+    if (!track) return;
+
+    total = track.children.length;
+
+    // Calculate card width + gap dynamically
+    function getSlideWidth() {
+      const card = track.children[0];
+      if (!card) return 360;
+      const style = window.getComputedStyle(card);
+      return card.offsetWidth + parseInt(style.marginRight || 0) + 20; // 20 = gap
+    }
+
+    function goTo(index) {
+      const wrap = document.querySelector('.testimonials-track-wrap');
+      const visibleCount = Math.max(1, Math.floor(wrap.offsetWidth / getSlideWidth()));
+      const maxIndex     = Math.max(0, total - visibleCount);
+      current = Math.min(Math.max(index, 0), maxIndex);
+
+      track.style.transform = `translateX(-${current * getSlideWidth()}px)`;
+
+      dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    // Expose globally for inline onclick
+    window.goToSlide = goTo;
+    window.nextSlide = () => { goTo(current + 1 >= total ? 0 : current + 1); restartAuto(); };
+    window.prevSlide = () => { goTo(current - 1 < 0 ? total - 1 : current - 1); restartAuto(); };
+
+    // Auto-scroll
+    function startAuto() {
+      autoTimer = setInterval(() => {
+        goTo(current + 1 >= total ? 0 : current + 1);
+      }, INTERVAL);
+    }
+    function restartAuto() {
+      clearInterval(autoTimer);
+      startAuto();
+    }
+
+    // Drag support (mouse + touch)
+    const wrap = document.querySelector('.testimonials-track-wrap');
+
+    wrap.addEventListener('mousedown', e => {
+      isDragging = true; startX = e.clientX; dragOffset = 0;
+      track.style.transition = 'none';
+      clearInterval(autoTimer);
+    });
+    window.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      dragOffset = e.clientX - startX;
+      track.style.transform = `translateX(${-current * getSlideWidth() + dragOffset}px)`;
+    });
+    window.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      track.style.transition = 'transform 0.5s cubic-bezier(0.4,0,0.2,1)';
+      if (dragOffset < -80)       goTo(current + 1);
+      else if (dragOffset > 80)   goTo(current - 1);
+      else                        goTo(current);
+      restartAuto();
+    });
+
+    // Touch
+    wrap.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX; dragOffset = 0;
+      track.style.transition = 'none';
+      clearInterval(autoTimer);
+    }, { passive: true });
+    wrap.addEventListener('touchmove', e => {
+      dragOffset = e.touches[0].clientX - startX;
+      track.style.transform = `translateX(${-current * getSlideWidth() + dragOffset}px)`;
+    }, { passive: true });
+    wrap.addEventListener('touchend', () => {
+      track.style.transition = 'transform 0.5s cubic-bezier(0.4,0,0.2,1)';
+      if (dragOffset < -60)      goTo(current + 1);
+      else if (dragOffset > 60)  goTo(current - 1);
+      else                       goTo(current);
+      restartAuto();
+    });
+
+    // Pause on hover
+    wrap.addEventListener('mouseenter', () => clearInterval(autoTimer));
+    wrap.addEventListener('mouseleave', restartAuto);
+
+    goTo(0);
+    startAuto();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSlider);
+  } else {
+    initSlider();
+  }
+})();
