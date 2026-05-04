@@ -1,103 +1,43 @@
 /* ============================================================
-   SkillBridge — Complete Script
-   APIs: JSearch (Naukri/LinkedIn/Indeed/Internshala)
-         Adzuna (Global)
-         Remotive (Free, no key, remote tech)
+   SkillBridge — Complete Script (All 3 Weeks)
+   Week 1 : UI & sample data logic
+   Week 2 : Real Adzuna API integration
+   Week 3 : Roadmap, share, deploy-ready
    ============================================================ */
 
 'use strict';
 
 // ── State ──────────────────────────────────────────────────
-let activeSource  = 'sample';   // 'jsearch' | 'adzuna' | 'remotive' | 'sample'
-let jsearchKey    = '';
-let adzunaAppId   = '';
-let adzunaAppKey  = '';
+let usingRealApi = false;
+let adzunaAppId  = '';
+let adzunaAppKey = '';
 
-// ── Simple Data Option Toggle ──────────────────────────────
-function selectDataOption(choice, el) {
-  // Deselect all
-  document.querySelectorAll('.data-option').forEach(o => o.classList.remove('active'));
-  document.getElementById('check-sample').classList.add('hidden');
-  document.getElementById('check-live').classList.add('hidden');
-
-  // Select chosen
-  el.classList.add('active');
-  document.getElementById(`check-${choice}`).classList.remove('hidden');
-
-  // Show/hide live setup
-  const setup = document.getElementById('live-setup');
-  if (choice === 'live') {
-    setup.classList.add('visible');
-  } else {
-    setup.classList.remove('visible');
-  }
-}
-
-function confirmDataChoice() {
-  const liveActive = document.getElementById('opt-live').classList.contains('active');
-  if (liveActive) {
-    const key = document.getElementById('jsearch-key').value.trim();
-    if (!key) {
-      flashNotice('Please paste your RapidAPI key to use live data — or choose "Start Instantly".', 'warn');
-      document.getElementById('jsearch-key').focus();
-      return;
-    }
-    saveJSearchKey();
-  } else {
-    skipApiSetup();
-  }
-}
-
-// Keep switchApiTab as no-op for backward compat
-function switchApiTab() {}
-
-// ── Save JSearch Key ───────────────────────────────────────
-function saveJSearchKey() {
-  const key = document.getElementById('jsearch-key').value.trim();
-  if (!key) { flashNotice('Please paste your RapidAPI key.', 'warn'); return; }
-  localStorage.setItem('sb_jsearch_key', key);
-  jsearchKey   = key;
-  activeSource = 'jsearch';
-  updateModeBadge('📡 JSearch Live · Naukri · LinkedIn · Indeed · Internshala');
-  flashNotice('✅ JSearch connected! Pulling live jobs from Naukri, LinkedIn & more.', 'success');
-  hideApiNotice();
-}
-
-// ── Save Adzuna Keys ───────────────────────────────────────
+// ── API Key Management ─────────────────────────────────────
 function saveApiKeys() {
   const id  = document.getElementById('api-app-id').value.trim();
   const key = document.getElementById('api-app-key').value.trim();
-  if (!id || !key) { flashNotice('Please enter both Adzuna App ID and App Key.', 'warn'); return; }
+
+  if (!id || !key) {
+    flashNotice('Please enter both App ID and App Key.', 'warn');
+    return;
+  }
+
   localStorage.setItem('sb_app_id',  id);
   localStorage.setItem('sb_app_key', key);
   adzunaAppId  = id;
   adzunaAppKey = key;
-  activeSource = 'adzuna';
-  updateModeBadge('📡 Adzuna Live · Global Job Data');
-  flashNotice('✅ Adzuna connected! Live global job listings enabled.', 'success');
-  hideApiNotice();
-}
+  usingRealApi = true;
 
-// ── Enable Remotive (free, no key) ─────────────────────────
-function enableRemotive() {
-  localStorage.setItem('sb_source', 'remotive');
-  activeSource = 'remotive';
-  updateModeBadge('📡 Remotive Live · Remote Tech Jobs (Free)');
-  flashNotice('✅ Remotive enabled! Fetching remote tech jobs — no key needed.', 'success');
+  document.getElementById('data-mode-badge').textContent = '📡 Live Job Data Enabled ✓';
+  document.getElementById('data-mode-badge').style.background = 'rgba(0,245,160,0.12)';
+  flashNotice('API keys saved! Live job data is now active.', 'success');
   hideApiNotice();
-}
-
-function updateModeBadge(text) {
-  const badge = document.getElementById('data-mode-badge');
-  badge.textContent = text;
-  badge.style.background = 'rgba(0,245,160,0.12)';
-  badge.style.borderColor = 'rgba(0,245,160,0.35)';
 }
 
 function skipApiSetup() {
-  activeSource = 'sample';
+  usingRealApi = false;
   hideApiNotice();
-  flashNotice('Using sample data. Add an API key anytime to get live jobs.', 'info');
+  flashNotice('Using sample data. You can add API keys anytime.', 'info');
 }
 
 function hideApiNotice() {
@@ -186,186 +126,47 @@ const FALLBACK_RESOURCE = (skill) => ({
   time:  'Varies'
 });
 
-// ═══════════════════════════════════════════════════════════
-//  MULTI-SOURCE JOB FETCHERS
-// ═══════════════════════════════════════════════════════════
-
-// ── 1. JSearch (RapidAPI) — Naukri, LinkedIn, Indeed, Internshala, Glassdoor ──
-async function fetchJSearchJobs(city, role) {
-  const query = `${role || 'developer'} in ${city}`;
-  const url   = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=2&date_posted=month`;
-
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'X-RapidAPI-Key':  jsearchKey,
-      'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'
-    }
-  });
-
-  if (!res.ok) throw new Error(`JSearch error: ${res.status}`);
-  const data = await res.json();
-
-  window._adzunaTotalCount = data.data?.length || 0;
-
-  return (data.data || []).map(j => ({
-    title:        j.job_title,
-    company:      { display_name: j.employer_name },
-    location:     { display_name: (j.job_is_remote ? 'Remote' : `${j.job_city || city}, ${j.job_country || ''}`.trim()) },
-    salary_min:   j.job_min_salary,
-    salary_max:   j.job_max_salary,
-    redirect_url: j.job_apply_link,
-    description:  j.job_description || '',
-    created:      j.job_posted_at_datetime_utc,
-    contract_time: j.job_employment_type === 'FULLTIME' ? 'full_time'
-                 : j.job_employment_type === 'PARTTIME' ? 'part_time' : '',
-    category:     { label: j.job_publisher || '' },
-    is_remote:    j.job_is_remote,
-  }));
-}
-
-// ── 2. Adzuna — broad global coverage ─────────────────────
-const COUNTRY_MAP = {
-  'mumbai':'in','delhi':'in','bangalore':'in','bengaluru':'in','hyderabad':'in',
-  'pune':'in','chennai':'in','kolkata':'in','ahmedabad':'in','jaipur':'in',
-  'surat':'in','lucknow':'in','nagpur':'in','indore':'in','bhopal':'in',
-  'sonipat':'in','gurugram':'in','noida':'in','gurgaon':'in','chandigarh':'in',
-  'coimbatore':'in','kochi':'in','vizag':'in','patna':'in','kanpur':'in',
-  'london':'gb','manchester':'gb','edinburgh':'gb','birmingham':'gb','leeds':'gb',
-  'bristol':'gb','liverpool':'gb','sheffield':'gb','glasgow':'gb',
-  'new york':'us','san francisco':'us','chicago':'us','los angeles':'us',
-  'seattle':'us','austin':'us','boston':'us','denver':'us','miami':'us','dallas':'us',
-  'toronto':'ca','vancouver':'ca','montreal':'ca','calgary':'ca',
-  'sydney':'au','melbourne':'au','brisbane':'au','perth':'au',
-  'berlin':'de','munich':'de','frankfurt':'de','hamburg':'de',
-  'paris':'fr','dubai':'ae','singapore':'sg','amsterdam':'nl',
-};
-
-function guessCountryCode(city) {
-  const key = city.toLowerCase().trim();
-  for (const [k, v] of Object.entries(COUNTRY_MAP)) {
-    if (key.includes(k)) return v;
-  }
-  return 'gb';
-}
-
+// ── Adzuna API ─────────────────────────────────────────────
 async function fetchAdzunaJobs(city, role) {
   const query   = role || 'developer';
   const country = guessCountryCode(city);
-  const build   = (page) =>
-    `https://api.adzuna.com/v1/api/jobs/${country}/search/${page}` +
+  const url     = `https://api.adzuna.com/v1/api/jobs/${country}/search/1` +
     `?app_id=${adzunaAppId}&app_key=${adzunaAppKey}` +
     `&results_per_page=10&what=${encodeURIComponent(query)}&where=${encodeURIComponent(city)}` +
-    `&sort_by=relevance&content-type=application/json`;
+    `&content-type=application/json`;
 
-  const [r1, r2] = await Promise.allSettled([fetch(build(1)), fetch(build(2))]);
-  let jobs = [];
-
-  if (r1.status === 'fulfilled' && r1.value.ok) {
-    const d = await r1.value.json();
-    window._adzunaTotalCount = d.count || 0;
-    jobs = jobs.concat(d.results || []);
-  } else {
-    throw new Error('Adzuna API failed — check your App ID and Key.');
-  }
-  if (r2.status === 'fulfilled' && r2.value.ok) {
-    const d = await r2.value.json();
-    jobs = jobs.concat(d.results || []);
-  }
-  return jobs;
-}
-
-// ── 3. Remotive — free, no key, remote tech jobs ───────────
-async function fetchRemotiveJobs(role) {
-  const category = mapRoleToRemotive(role);
-  const url = `https://remotive.com/api/remote-jobs?category=${encodeURIComponent(category)}&limit=20`;
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Remotive error: ${res.status}`);
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error(`Adzuna API error: ${res.status}`);
   const data = await res.json();
-
-  window._adzunaTotalCount = data.jobs?.length || 0;
-
-  return (data.jobs || []).map(j => ({
-    title:        j.title,
-    company:      { display_name: j.company_name },
-    location:     { display_name: j.candidate_required_location || 'Worldwide Remote' },
-    salary_min:   null,
-    salary_max:   null,
-    redirect_url: j.url,
-    description:  j.description || '',
-    created:      j.publication_date,
-    contract_time: 'full_time',
-    category:     { label: j.category || '' },
-    is_remote:    true,
-  }));
+  return data.results || [];
 }
 
-function mapRoleToRemotive(role) {
+function guessCountryCode(city) {
   const map = {
-    'web developer':     'software-dev',
-    'software engineer': 'software-dev',
-    'data analyst':      'data',
-    'ui ux designer':    'design',
-    'digital marketing': 'marketing',
-    'project manager':   'management-finance',
+    'london':'gb','manchester':'gb','edinburgh':'gb','birmingham':'gb',
+    'new york':'us','san francisco':'us','chicago':'us','los angeles':'us','seattle':'us',
+    'mumbai':'in','delhi':'in','bangalore':'in','hyderabad':'in','pune':'in','chennai':'in',
+    'toronto':'ca','vancouver':'ca','montreal':'ca',
+    'sydney':'au','melbourne':'au','brisbane':'au',
+    'berlin':'de','munich':'de','frankfurt':'de',
+    'paris':'fr','lyon':'fr',
+    'dubai':'ae','abu dhabi':'ae',
+    'singapore':'sg',
   };
-  return map[role] || 'software-dev';
-}
-
-// Smart skill extraction — counts how many jobs mention each skill (frequency)
-function extractSkillsFromJobs(jobs, roleKey) {
-  // Build one big lowercased string from all job text
-  const texts = jobs.map(j =>
-    [(j.title || ''), (j.description || ''), (j.category?.label || '')].join(' ').toLowerCase()
-  );
-
-  // Use role-specific skills + general skills as our candidate pool
-  const candidates = [
-    ...new Set([
-      ...(SKILL_DB[roleKey] || []),
-      ...SKILL_DB['general'],
-    ])
-  ];
-
-  // Count frequency of each skill across all job listings
-  const scored = candidates.map(skill => {
-    const count = texts.filter(t => t.includes(skill)).length;
-    return { skill, count };
-  });
-
-  // Sort by frequency — most demanded skills first
-  scored.sort((a, b) => b.count - a.count);
-
-  // Return only skills that appear in at least 1 job
-  return scored.filter(s => s.count > 0).map(s => s.skill);
-}
-
-// Format salary nicely from Adzuna data
-function formatSalary(job) {
-  const min = job.salary_min;
-  const max = job.salary_max;
-  if (!min && !max) return 'Salary not listed';
-  if (min && max) {
-    const fMin = min >= 1000 ? `${Math.round(min / 1000)}k` : min;
-    const fMax = max >= 1000 ? `${Math.round(max / 1000)}k` : max;
-    return `$${fMin} – $${fMax}/yr`;
+  const key = city.toLowerCase();
+  for (const [k,v] of Object.entries(map)) {
+    if (key.includes(k)) return v;
   }
-  if (min) return `From $${Math.round(min / 1000)}k/yr`;
-  return `Up to $${Math.round(max / 1000)}k/yr`;
+  return 'us'; // fallback
 }
 
-// Get readable posted date from Adzuna's created field
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const d    = new Date(dateStr);
-  const now  = new Date();
-  const days = Math.floor((now - d) / 86400000);
-  if (days === 0) return 'Today';
-  if (days === 1) return '1 day ago';
-  if (days < 7)  return `${days} days ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return `${Math.floor(days / 30)}mo ago`;
+function extractSkillsFromJobs(jobs) {
+  const allText = jobs.map(j => (
+    (j.title || '') + ' ' + (j.description || '') + ' ' + (j.category?.label || '')
+  ).toLowerCase()).join(' ');
+
+  const allSkills = SKILL_DB['general'];
+  return allSkills.filter(skill => allText.includes(skill.toLowerCase()));
 }
 
 // ── Main Analyze Function ──────────────────────────────────
@@ -373,220 +174,163 @@ async function analyzeSkills() {
   const cityInput   = document.getElementById('city').value.trim();
   const skillsInput = document.getElementById('skills').value.trim();
   const roleSelect  = document.getElementById('job-role').value;
-  const roleKey     = roleSelect || 'general';
 
   if (!cityInput)   { shakeInput('city');   return; }
   if (!skillsInput) { shakeInput('skills'); return; }
 
-  // Parse user skills — clean and deduplicate
-  const userSkills = [...new Set(
-    skillsInput.toLowerCase().split(',').map(s => s.trim()).filter(Boolean)
-  )];
+  // Parse user skills
+  const userSkills = skillsInput.toLowerCase()
+    .split(',').map(s => s.trim()).filter(Boolean);
 
+  // Switch to loading view
   showLoading();
-  window._adzunaTotalCount = 0;
 
-  await animateStep('ls1', 900);
+  // Animate loading steps
+  await animateStep('ls1', 800);
+  await animateStep('ls2', 900);
 
   let jobs         = [];
   let demandSkills = [];
-  let apiWorked    = false;
 
-  // ── Multi-source API dispatch ──────────────────────────────
   try {
-    await animateStep('ls2', 300);
-
-    if (activeSource === 'jsearch') {
-      jobs      = await fetchJSearchJobs(cityInput, roleSelect);
-      apiWorked = true;
-      flashNotice(`✅ ${jobs.length} jobs fetched via JSearch (Naukri, LinkedIn, Indeed)!`, 'success');
-
-    } else if (activeSource === 'adzuna') {
-      jobs      = await fetchAdzunaJobs(cityInput, roleSelect);
-      apiWorked = true;
-      flashNotice(`✅ ${jobs.length} jobs fetched from Adzuna!`, 'success');
-
-    } else if (activeSource === 'remotive') {
-      jobs      = await fetchRemotiveJobs(roleSelect);
-      apiWorked = true;
-      flashNotice(`✅ ${jobs.length} remote jobs fetched from Remotive!`, 'success');
-
-    } else {
-      // Sample data
-      await delay(700);
-      jobs = getSampleJobs(cityInput, roleKey);
-    }
-
-    if (apiWorked) {
-      demandSkills = extractSkillsFromJobs(jobs, roleKey);
-      if (demandSkills.length < 5) {
-        demandSkills = [...new Set([...demandSkills, ...SKILL_DB[roleKey]])];
+    if (usingRealApi) {
+      jobs         = await fetchAdzunaJobs(cityInput, roleSelect);
+      demandSkills = extractSkillsFromJobs(jobs);
+      if (!demandSkills.length) {
+        demandSkills = SKILL_DB[roleSelect || 'general'];
       }
     } else {
-      demandSkills = SKILL_DB[roleKey];
+      // Simulate a delay for sample data
+      await delay(600);
+      demandSkills = SKILL_DB[roleSelect || 'general'];
+      jobs         = getSampleJobs(cityInput, roleSelect);
     }
-
   } catch (err) {
-    console.warn('API fetch failed:', err.message);
-    flashNotice(`⚠️ API error — using sample data. ${err.message}`, 'warn');
-    await animateStep('ls2', 400);
-    jobs         = getSampleJobs(cityInput, roleKey);
-    demandSkills = SKILL_DB[roleKey];
-    apiWorked    = false;
+    console.warn('API fetch failed, falling back to sample data:', err);
+    demandSkills = SKILL_DB[roleSelect || 'general'];
+    jobs         = getSampleJobs(cityInput, roleSelect);
+    usingRealApi = false;
   }
 
   await animateStep('ls3', 700);
-  await animateStep('ls4', 500);
+  await animateStep('ls4', 600);
 
-  // Match user skills against demand — flexible partial matching
+  // Compare skills
   const matched = demandSkills.filter(skill =>
-    userSkills.some(u =>
-      u === skill ||
-      u.includes(skill) ||
-      skill.includes(u) ||
-      levenshtein(u, skill) <= 1   // catch typos like "Recat" → "React"
-    )
+    userSkills.some(u => u.includes(skill) || skill.includes(u))
   );
-
   const missing = demandSkills.filter(skill =>
-    !userSkills.some(u =>
-      u === skill || u.includes(skill) || skill.includes(u) || levenshtein(u, skill) <= 1
-    )
-  ).slice(0, 8);
+    !userSkills.some(u => u.includes(skill) || skill.includes(u))
+  ).slice(0, 7);
 
   const score = calcScore(matched.length, demandSkills.length);
 
-  await delay(300);
+  await delay(400);
   hideLoading();
-  renderResults({ city: cityInput, role: roleSelect, roleKey, userSkills, matched, missing, score, jobs, demandSkills, apiWorked });
-}
-
-// ── Levenshtein distance — catch small typos ───────────────
-function levenshtein(a, b) {
-  if (Math.abs(a.length - b.length) > 3) return 99;
-  const dp = Array.from({ length: a.length + 1 }, (_, i) =>
-    Array.from({ length: b.length + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0)
-  );
-  for (let i = 1; i <= a.length; i++)
-    for (let j = 1; j <= b.length; j++)
-      dp[i][j] = a[i-1] === b[j-1]
-        ? dp[i-1][j-1]
-        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
-  return dp[a.length][b.length];
+  renderResults({ city: cityInput, role: roleSelect, userSkills, matched, missing, score, jobs, demandSkills });
 }
 
 // ── Render Results ─────────────────────────────────────────
-function renderResults({ city, role, roleKey, userSkills, matched, missing, score, jobs, demandSkills, apiWorked }) {
+function renderResults({ city, role, userSkills, matched, missing, score, jobs }) {
 
-  // Live timestamp
-  const now = new Date();
-  const tsEl = document.getElementById('results-timestamp');
-  if (tsEl) tsEl.textContent = `🕐 Analyzed: ${now.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' })} at ${now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' })}`;
-
-  // Header
+  // City label
   const roleLabel = role ? ` · ${cap(role)}` : '';
-  const sourceLabel = activeSource === 'jsearch'   ? 'JSearch · Naukri/LinkedIn/Indeed'
-                   : activeSource === 'adzuna'    ? 'Adzuna'
-                   : activeSource === 'remotive'  ? 'Remotive · Remote'
-                   : 'Sample Data';
-  const dataLabel = apiWorked
-    ? ` · ${jobs.length} jobs · ${sourceLabel}`
-    : ` · Sample Data`;
   document.getElementById('results-city').textContent =
-    `📍 ${cap(city)}${roleLabel}${dataLabel}`;
+    `📍 ${cap(city)}${roleLabel}`;
 
-  // Score ring
+  // Score ring animation
   const ring = document.getElementById('score-fill-ring');
-  ring.style.strokeDashoffset = 314;
+  const circumference = 314;
+  ring.style.strokeDashoffset = circumference;
+
+  // Inject SVG gradient
   injectScoreGradient(ring.closest('svg'));
+
   setTimeout(() => {
-    ring.style.strokeDashoffset = 314 - (314 * score / 100);
+    ring.style.strokeDashoffset = circumference - (circumference * score / 100);
   }, 200);
 
-  animateNumber('score-num', 0, score, 1300);
+  // Animate score number
+  animateNumber('score-num', 0, score, 1200);
 
-  // Breakdown
+  // Breakdown numbers
   document.getElementById('b-have').textContent    = matched.length;
   document.getElementById('b-missing').textContent = missing.length;
-  document.getElementById('b-jobs').textContent    = apiWorked
-    ? (window._adzunaTotalCount || jobs.length)
-    : '20+';
+  document.getElementById('b-jobs').textContent    = usingRealApi ? jobs.length : '20+';
 
-  // Score message
-  const descs = [
-    [30,  '🌱 You\'re just starting out — every expert was once a beginner. Keep going!'],
-    [50,  '🔥 Good foundation! A few more skills will make you highly competitive.'],
-    [70,  '🚀 Solid profile! You\'re already attractive to many employers.'],
-    [90,  '⚡ Excellent! You\'re highly competitive in the current job market.'],
-    [101, '🏆 Outstanding! You match almost everything employers are looking for.'],
-  ];
-  document.getElementById('score-desc').textContent =
-    descs.find(([threshold]) => score < threshold)[1];
+  // Score description
+  let desc = '';
+  if (score < 30)      desc = '🌱 You\'re just starting — every expert was once a beginner!';
+  else if (score < 50) desc = '🔥 Good foundation! A few more skills will make you competitive.';
+  else if (score < 70) desc = '🚀 Solid profile! You\'re already attractive to many employers.';
+  else if (score < 90) desc = '⚡ Excellent! You\'re highly competitive in the job market.';
+  else                 desc = '🏆 Outstanding! You have all the in-demand skills employers want.';
+  document.getElementById('score-desc').textContent = desc;
 
-  // Skills you have
+  // Tags — have
   const tagsHave = document.getElementById('tags-have');
   tagsHave.innerHTML = '';
-  const showHave = matched.length ? matched : userSkills.slice(0, 8);
-  showHave.forEach(skill => {
+  (matched.length ? matched : userSkills.slice(0, 8)).forEach(skill => {
     tagsHave.innerHTML += `<span class="tag tag-have">${cap(skill)}</span>`;
   });
   if (!matched.length) {
-    tagsHave.innerHTML = `<span style="color:var(--muted);font-size:.85rem">No matches found — try adding more specific skills!</span>`;
+    tagsHave.innerHTML = `<span style="color:var(--muted);font-size:.85rem">None matched yet — add more skills below!</span>`;
   }
 
-  // Skills to learn — show demand count badge if real API
+  // Tags — missing
   const tagsMissing = document.getElementById('tags-missing');
   tagsMissing.innerHTML = '';
   missing.forEach(skill => {
     tagsMissing.innerHTML += `<span class="tag tag-missing">${cap(skill)}</span>`;
   });
 
-  // Roadmap — with demand level indicator
+  // Roadmap
   const roadmapEl = document.getElementById('roadmap-cards');
   roadmapEl.innerHTML = '';
+  missing.slice(0, 5).forEach((skill, i) => {
+    const res = RESOURCES[skill] || FALLBACK_RESOURCE(skill);
+    roadmapEl.innerHTML += `
+      <div class="roadmap-item">
+        <div class="roadmap-num">${String(i + 1).padStart(2,'0')}</div>
+        <div class="roadmap-info">
+          <div class="roadmap-skill">${cap(skill)}</div>
+          <div class="roadmap-desc">⏱ Estimated time: ${res.time}</div>
+        </div>
+        <a class="roadmap-link" href="${res.url}" target="_blank" rel="noopener">
+          Start Learning →
+        </a>
+      </div>`;
+  });
   if (!missing.length) {
-    roadmapEl.innerHTML = `<p style="color:var(--accent);font-weight:700;font-size:1rem">🎉 You already have all key in-demand skills! Start applying now.</p>`;
-  } else {
-    missing.slice(0, 6).forEach((skill, i) => {
-      const res    = RESOURCES[skill] || FALLBACK_RESOURCE(skill);
-      const urgent = i < 2 ? '🔥 High Demand' : i < 4 ? '📈 In Demand' : '📚 Good to Know';
-      roadmapEl.innerHTML += `
-        <div class="roadmap-item">
-          <div class="roadmap-num">${String(i + 1).padStart(2, '0')}</div>
-          <div class="roadmap-info">
-            <div class="roadmap-skill">${cap(skill)}</div>
-            <div class="roadmap-desc">${urgent} &nbsp;·&nbsp; ⏱ ~${res.time}</div>
-          </div>
-          <a class="roadmap-link" href="${res.url}" target="_blank" rel="noopener">
-            Start Free →
-          </a>
-        </div>`;
-    });
+    roadmapEl.innerHTML = `<p style="color:var(--accent);font-weight:700">🎉 You already have all the key skills! Time to apply.</p>`;
   }
 
-  // Store all jobs globally for filtering / load more
-  window._allJobs     = jobs;
-  window._jobCity     = city;
-  window._jobRole     = role || 'developer';
-  window._jobsShowing = 6;
-  window._activeFilter = 'all';
+  // Jobs
+  const jobsList = document.getElementById('jobs-list');
+  jobsList.innerHTML = '';
+  const displayJobs = jobs.slice(0, 5);
+  displayJobs.forEach(job => {
+    const initial = (job.company?.display_name || job.company || 'Co').charAt(0).toUpperCase();
+    const salary  = job.salary_min
+      ? `$${Math.round(job.salary_min / 1000)}k–$${Math.round(job.salary_max / 1000)}k/yr`
+      : 'Salary not listed';
+    const href    = job.redirect_url || job.url || '#';
+    const title   = job.title || job.role || 'Software Developer';
+    const company = job.company?.display_name || job.company || 'Tech Company';
+    const location= job.location?.display_name || job.location || cap(city);
 
-  // Jobs count badge
-  const srcIcon = activeSource === 'jsearch'  ? '🇮🇳'
-               : activeSource === 'remotive' ? '💻'
-               : '🌍';
-  document.getElementById('jobs-count-badge').textContent = apiWorked
-    ? `${srcIcon} Live · ${jobs.length} listings`
-    : `📋 Sample · ${jobs.length} listings`;
+    jobsList.innerHTML += `
+      <a class="job-card" href="${href}" target="_blank" rel="noopener">
+        <div class="job-co">${initial}</div>
+        <div class="job-info">
+          <div class="job-title">${title}</div>
+          <div class="job-meta">${company} · ${location}</div>
+        </div>
+        <div class="job-salary">${salary}</div>
+      </a>`;
+  });
 
-  // Render initial 6 jobs
-  renderJobCards(jobs.slice(0, 6));
-
-  // Load more button — show if more than 6
-  const loadMoreBtn = document.getElementById('btn-load-more');
-  loadMoreBtn.style.display = jobs.length > 6 ? 'block' : 'none';
-
-  // More jobs link
+  // More jobs button
   const moreBtn = document.getElementById('btn-more-jobs');
   const roleQ   = role ? encodeURIComponent(role) : 'developer';
   const cityQ   = encodeURIComponent(city);
@@ -595,92 +339,6 @@ function renderResults({ city, role, roleKey, userSkills, matched, missing, scor
   // Show results
   document.getElementById('results').classList.add('visible');
   document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-}
-
-// ── Job Cards Renderer ─────────────────────────────────────
-function renderJobCards(jobs) {
-  const jobsList = document.getElementById('jobs-list');
-  jobsList.innerHTML = '';
-
-  if (!jobs.length) {
-    jobsList.innerHTML = `
-      <div class="jobs-empty">
-        <span>🔍</span>
-        No jobs found for this filter. Try "All Jobs" or a different role.
-      </div>`;
-    return;
-  }
-
-  jobs.forEach(job => {
-    const companyName  = job.company?.display_name || job.company || 'Company';
-    const initial      = companyName.charAt(0).toUpperCase();
-    const title        = job.title || 'Developer';
-    const location     = job.location?.display_name || job.location || 'Your City';
-    const href         = job.redirect_url || job.url || '#';
-    const salary       = formatSalary(job);
-    const posted       = formatDate(job.created);
-    const category     = job.category?.label || '';
-    const contractType = job.contract_time === 'full_time' ? '🕐 Full-time'
-                       : job.contract_time === 'part_time' ? '⏰ Part-time'
-                       : job.contract_type === 'permanent' ? '📋 Permanent'
-                       : '💼 Contract';
-
-    jobsList.innerHTML += `
-      <a class="job-card" href="${href}" target="_blank" rel="noopener">
-        <div class="job-co">${initial}</div>
-        <div class="job-info">
-          <div class="job-title">${title}</div>
-          <div class="job-meta">${companyName} · ${location}</div>
-          <div class="job-tags-row">
-            <span class="job-pill">${contractType}</span>
-            ${category ? `<span class="job-pill">${category}</span>` : ''}
-            ${posted   ? `<span class="job-pill">🕐 ${posted}</span>`  : ''}
-          </div>
-        </div>
-        <div class="job-right">
-          <div class="job-salary">${salary}</div>
-          <div class="job-apply">Apply →</div>
-        </div>
-      </a>`;
-  });
-}
-
-// ── Filter Jobs ────────────────────────────────────────────
-function filterJobs(filter, btn) {
-  // Update active button
-  document.querySelectorAll('.jf-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  window._activeFilter  = filter;
-  window._jobsShowing   = 6;
-
-  const filtered = applyFilter(window._allJobs || [], filter);
-  renderJobCards(filtered.slice(0, 6));
-
-  // Load more button
-  const loadMoreBtn = document.getElementById('btn-load-more');
-  loadMoreBtn.style.display = filtered.length > 6 ? 'block' : 'none';
-}
-
-function applyFilter(jobs, filter) {
-  if (filter === 'all')       return jobs;
-  if (filter === 'full_time') return jobs.filter(j => j.contract_time === 'full_time');
-  if (filter === 'part_time') return jobs.filter(j => j.contract_time === 'part_time');
-  if (filter === 'remote')    return jobs.filter(j =>
-    (j.location?.display_name || j.location || '').toLowerCase().includes('remote') ||
-    (j.title || '').toLowerCase().includes('remote')
-  );
-  if (filter === 'salary')    return jobs.filter(j => j.salary_min || j.salary_max);
-  return jobs;
-}
-
-// ── Load More Jobs ─────────────────────────────────────────
-function loadMoreJobs() {
-  window._jobsShowing = (window._jobsShowing || 6) + 6;
-  const filtered = applyFilter(window._allJobs || [], window._activeFilter || 'all');
-  renderJobCards(filtered.slice(0, window._jobsShowing));
-
-  const loadMoreBtn = document.getElementById('btn-load-more');
-  loadMoreBtn.style.display = filtered.length > window._jobsShowing ? 'block' : 'none';
 }
 
 // ── Sample Jobs (Week 1 fallback) ──────────────────────────
@@ -834,29 +492,17 @@ document.head.appendChild(shakeStyle);
 
 // ── Init ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore saved API source & keys
-  const savedJSearch  = localStorage.getItem('sb_jsearch_key');
-  const savedAdzId    = localStorage.getItem('sb_app_id');
-  const savedAdzKey   = localStorage.getItem('sb_app_key');
-  const savedRemotive = localStorage.getItem('sb_source') === 'remotive';
-
-  if (savedJSearch) {
-    jsearchKey   = savedJSearch;
-    activeSource = 'jsearch';
-    document.getElementById('jsearch-key').value = savedJSearch;
-    updateModeBadge('📡 JSearch Live · Naukri · LinkedIn · Indeed · Internshala');
-    hideApiNotice();
-  } else if (savedAdzId && savedAdzKey) {
-    adzunaAppId  = savedAdzId;
-    adzunaAppKey = savedAdzKey;
-    activeSource = 'adzuna';
-    document.getElementById('api-app-id').value  = savedAdzId;
-    document.getElementById('api-app-key').value = savedAdzKey;
-    updateModeBadge('📡 Adzuna Live · Global Job Data');
-    hideApiNotice();
-  } else if (savedRemotive) {
-    activeSource = 'remotive';
-    updateModeBadge('📡 Remotive Live · Remote Tech Jobs (Free)');
+  // Restore saved API keys
+  const savedId  = localStorage.getItem('sb_app_id');
+  const savedKey = localStorage.getItem('sb_app_key');
+  if (savedId && savedKey) {
+    adzunaAppId  = savedId;
+    adzunaAppKey = savedKey;
+    usingRealApi = true;
+    document.getElementById('api-app-id').value  = savedId;
+    document.getElementById('api-app-key').value = savedKey;
+    document.getElementById('data-mode-badge').textContent = '📡 Live Job Data Enabled ✓';
+    document.getElementById('data-mode-badge').style.background = 'rgba(0,245,160,0.12)';
     hideApiNotice();
   }
 
@@ -868,115 +514,3 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') analyzeSkills();
   });
 });
-
-/* ============================================================
-   TESTIMONIALS SLIDER
-   Auto-scroll · Drag · Dot Navigation
-   ============================================================ */
-
-(function () {
-  let current     = 0;
-  let total       = 0;
-  let autoTimer   = null;
-  let isDragging  = false;
-  let startX      = 0;
-  let dragOffset  = 0;
-  const INTERVAL  = 4000;
-
-  function initSlider() {
-    const track  = document.getElementById('ttrack');
-    const dots   = document.querySelectorAll('.tdot');
-    if (!track) return;
-
-    total = track.children.length;
-
-    // Calculate card width + gap dynamically
-    function getSlideWidth() {
-      const card = track.children[0];
-      if (!card) return 360;
-      const style = window.getComputedStyle(card);
-      return card.offsetWidth + parseInt(style.marginRight || 0) + 20; // 20 = gap
-    }
-
-    function goTo(index) {
-      const wrap = document.querySelector('.testimonials-track-wrap');
-      const visibleCount = Math.max(1, Math.floor(wrap.offsetWidth / getSlideWidth()));
-      const maxIndex     = Math.max(0, total - visibleCount);
-      current = Math.min(Math.max(index, 0), maxIndex);
-
-      track.style.transform = `translateX(-${current * getSlideWidth()}px)`;
-
-      dots.forEach((d, i) => d.classList.toggle('active', i === current));
-    }
-
-    // Expose globally for inline onclick
-    window.goToSlide = goTo;
-    window.nextSlide = () => { goTo(current + 1 >= total ? 0 : current + 1); restartAuto(); };
-    window.prevSlide = () => { goTo(current - 1 < 0 ? total - 1 : current - 1); restartAuto(); };
-
-    // Auto-scroll
-    function startAuto() {
-      autoTimer = setInterval(() => {
-        goTo(current + 1 >= total ? 0 : current + 1);
-      }, INTERVAL);
-    }
-    function restartAuto() {
-      clearInterval(autoTimer);
-      startAuto();
-    }
-
-    // Drag support (mouse + touch)
-    const wrap = document.querySelector('.testimonials-track-wrap');
-
-    wrap.addEventListener('mousedown', e => {
-      isDragging = true; startX = e.clientX; dragOffset = 0;
-      track.style.transition = 'none';
-      clearInterval(autoTimer);
-    });
-    window.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-      dragOffset = e.clientX - startX;
-      track.style.transform = `translateX(${-current * getSlideWidth() + dragOffset}px)`;
-    });
-    window.addEventListener('mouseup', () => {
-      if (!isDragging) return;
-      isDragging = false;
-      track.style.transition = 'transform 0.5s cubic-bezier(0.4,0,0.2,1)';
-      if (dragOffset < -80)       goTo(current + 1);
-      else if (dragOffset > 80)   goTo(current - 1);
-      else                        goTo(current);
-      restartAuto();
-    });
-
-    // Touch
-    wrap.addEventListener('touchstart', e => {
-      startX = e.touches[0].clientX; dragOffset = 0;
-      track.style.transition = 'none';
-      clearInterval(autoTimer);
-    }, { passive: true });
-    wrap.addEventListener('touchmove', e => {
-      dragOffset = e.touches[0].clientX - startX;
-      track.style.transform = `translateX(${-current * getSlideWidth() + dragOffset}px)`;
-    }, { passive: true });
-    wrap.addEventListener('touchend', () => {
-      track.style.transition = 'transform 0.5s cubic-bezier(0.4,0,0.2,1)';
-      if (dragOffset < -60)      goTo(current + 1);
-      else if (dragOffset > 60)  goTo(current - 1);
-      else                       goTo(current);
-      restartAuto();
-    });
-
-    // Pause on hover
-    wrap.addEventListener('mouseenter', () => clearInterval(autoTimer));
-    wrap.addEventListener('mouseleave', restartAuto);
-
-    goTo(0);
-    startAuto();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSlider);
-  } else {
-    initSlider();
-  }
-})();

@@ -1,26 +1,246 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>SkillBridge AI - Career Guidance</title>
-
-  <!-- SEO -->
-  <meta name="description" content="AI-powered career guidance platform for students">
-  <meta name="keywords" content="AI career guidance, skill roadmap, job AI, resume help">
-
-  <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="SkillBridge — Find your skill gap and get hired faster."/>
+  <title>SkillBridge — Find Your Skill Gap & Get Hired</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 </head>
-
 <body>
-  <div class="container">
-    <h1>SkillBridge AI 🚀</h1>
-    <p>Your AI Career Assistant</p>
 
-    <textarea id="input" placeholder="Ask your career question..."></textarea>
-    <button onclick="askAI()">Ask AI</button>
+  <div class="bg-grid"></div>
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
 
-    <div id="output"></div>
-  </div>
+  <!-- NAV -->
+  <nav>
+    <div class="logo">Skill<span>Bridge</span></div>
+    <div class="nav-links">
+      <a href="#how">How It Works</a>
+      <a href="#finder" class="btn-nav">Try It Free →</a>
+    </div>
+  </nav>
 
-  <script src="js/app.js"></script>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="badge animate-1">🚀 Free · No Sign Up · Real Job Data</div>
+    <h1 class="hero-title animate-2">
+      Find Your<br/>
+      <span class="highlight">Skill Gap.</span><br/>
+      Get Hired.
+    </h1>
+    <p class="hero-sub animate-3">
+      Enter your city and skills — we pull real job listings, find what employers want, and show you exactly what to learn next with free resources.
+    </p>
+    <a href="#finder" class="btn-hero animate-4">Analyze My Skills →</a>
+    <div class="stats animate-5">
+      <div class="stat"><span>Live</span><p>Job Data</p></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span>100%</span><p>Free</p></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span>2 min</span><p>To Results</p></div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how">
+    <p class="section-label">The Process</p>
+    <h2 class="section-title">Three Steps to Clarity</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Enter Your City</h3>
+        <p>We use your location to pull real, local job listings so results are relevant to where you want to work.</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>List Your Skills</h3>
+        <p>Add the skills you already know — tech tools, languages, software. We handle the matching automatically.</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Get Your Report</h3>
+        <p>See your job readiness score, the skills you're missing, live job listings, and free learning resources.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- API KEY SETUP -->
+  <section class="api-notice" id="api-notice">
+    <div class="notice-card">
+      <div class="notice-top">
+        <div class="notice-icon">🔑</div>
+        <div class="notice-text">
+          <h3>Connect Real Job Data <span class="optional-badge">Optional</span></h3>
+          <p>Get a free API key at <a href="https://developer.adzuna.com/" target="_blank" rel="noopener">developer.adzuna.com</a> to pull live job listings. Keys are saved only in your browser — never sent to us.</p>
+        </div>
+      </div>
+      <div class="api-inputs">
+        <input type="text" id="api-app-id" placeholder="Adzuna App ID" />
+        <input type="text" id="api-app-key" placeholder="Adzuna App Key" />
+        <button class="btn-save-api" onclick="saveApiKeys()">Save & Enable →</button>
+      </div>
+      <button class="btn-skip" onclick="skipApiSetup()">Skip — Use Sample Data instead</button>
+    </div>
+  </section>
+
+  <!-- FINDER FORM -->
+  <section class="finder" id="finder">
+    <div class="finder-card">
+      <div class="data-mode-badge" id="data-mode-badge">📡 Using Sample Data</div>
+      <h2>Analyze My Skills</h2>
+      <p class="finder-sub">Takes under 60 seconds</p>
+
+      <div class="form-group">
+        <label for="city">📍 Your City</label>
+        <input type="text" id="city" placeholder="e.g. Mumbai, New York, London…" autocomplete="off"/>
+      </div>
+
+      <div class="form-group">
+        <label for="job-role">💼 Target Job Role <span class="optional">(optional)</span></label>
+        <select id="job-role">
+          <option value="">— Any / General —</option>
+          <option value="web developer">Web Developer</option>
+          <option value="data analyst">Data Analyst</option>
+          <option value="ui ux designer">UI/UX Designer</option>
+          <option value="digital marketing">Digital Marketer</option>
+          <option value="project manager">Project Manager</option>
+          <option value="software engineer">Software Engineer</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="skills">🧠 Your Current Skills</label>
+        <input type="text" id="skills" placeholder="e.g. HTML, CSS, Photoshop, Excel…" autocomplete="off"/>
+        <span class="hint">Separate each skill with a comma</span>
+      </div>
+
+      <button class="btn-find" id="btn-find" onclick="analyzeSkills()">
+        <span id="btn-text">Find My Skill Gap →</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <section class="loading-section" id="loading-section">
+    <div class="loader-box">
+      <div class="spinner"></div>
+      <h3 id="loading-message">Scanning the job market…</h3>
+      <div class="loading-steps">
+        <div class="lstep" id="ls1">🌍 Finding jobs in your city</div>
+        <div class="lstep" id="ls2">🔍 Extracting required skills</div>
+        <div class="lstep" id="ls3">📊 Calculating your gap score</div>
+        <div class="lstep" id="ls4">📚 Finding free resources</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="results" id="results">
+    <div class="results-inner">
+
+      <div class="results-header">
+        <p class="results-badge">✅ Analysis Complete</p>
+        <h2>Your Skill Report</h2>
+        <p class="results-city" id="results-city"></p>
+      </div>
+
+      <!-- Score -->
+      <div class="score-block">
+        <div class="score-circle">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle class="score-bg-ring" cx="60" cy="60" r="50"/>
+            <circle class="score-fill-ring" id="score-fill-ring" cx="60" cy="60" r="50"
+              stroke-dasharray="314" stroke-dashoffset="314"/>
+          </svg>
+          <div class="score-text-inner">
+            <span class="score-num" id="score-num">0</span><span class="score-pct">%</span>
+          </div>
+        </div>
+        <div class="score-info">
+          <h3>Job Readiness Score</h3>
+          <p class="score-desc" id="score-desc"></p>
+          <div class="score-breakdown">
+            <div class="bk-item">
+              <span class="bk-num green" id="b-have">0</span>
+              <span class="bk-lbl">Skills Matched</span>
+            </div>
+            <div class="bk-item">
+              <span class="bk-num red" id="b-missing">0</span>
+              <span class="bk-lbl">Skills to Learn</span>
+            </div>
+            <div class="bk-item">
+              <span class="bk-num blue" id="b-jobs">0</span>
+              <span class="bk-lbl">Jobs Scanned</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skills Grid -->
+      <div class="results-grid">
+        <div class="result-card card-have">
+          <div class="card-header"><div class="card-icon">✅</div><h3>Skills You Have</h3></div>
+          <p class="card-sub">These match what employers are actively searching for.</p>
+          <div class="tags" id="tags-have"></div>
+        </div>
+        <div class="result-card card-missing">
+          <div class="card-header"><div class="card-icon">🎯</div><h3>Priority Skills to Learn</h3></div>
+          <p class="card-sub">These appear most in job listings you're currently missing.</p>
+          <div class="tags" id="tags-missing"></div>
+        </div>
+      </div>
+
+      <!-- Learning Roadmap -->
+      <div class="roadmap-section">
+        <h3>📚 Your Free Learning Roadmap</h3>
+        <p class="roadmap-sub">Work through these in order. Each link is 100% free.</p>
+        <div class="roadmap-cards" id="roadmap-cards"></div>
+      </div>
+
+      <!-- Live Jobs -->
+      <div class="jobs-section" id="jobs-section">
+        <h3>🏢 Live Jobs That Match Your Target Role</h3>
+        <p class="jobs-sub">Once you've closed your gap, these are waiting for you.</p>
+        <div class="jobs-list" id="jobs-list"></div>
+        <a class="btn-more-jobs" id="btn-more-jobs" href="#" target="_blank" rel="noopener">
+          View All Jobs on Adzuna →
+        </a>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-block">
+        <div class="cta-inner">
+          <h3>Your Next Move</h3>
+          <p>Bookmark this page, follow your roadmap, and re-analyze in 4 weeks to see your score improve.</p>
+          <div class="cta-actions">
+            <button class="btn-again" onclick="resetForm()">← Analyze Again</button>
+            <button class="btn-share" onclick="shareResult()">📤 Share Report</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="logo">Skill<span>Bridge</span></div>
+    <p>Built to help real people get real jobs. Always free.</p>
+    <div class="footer-links">
+      <a href="https://developer.adzuna.com/" target="_blank" rel="noopener">Adzuna API</a>
+      <span>·</span>
+      <a href="https://www.freecodecamp.org" target="_blank" rel="noopener">freeCodeCamp</a>
+      <span>·</span>
+      <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <p class="footer-credit">SkillBridge · Open Source · MIT License</p>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
